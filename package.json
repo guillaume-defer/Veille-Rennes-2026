@@ -1,0 +1,28 @@
+{
+  "name": "veille-rennes-2026",
+  "version": "1.0.0",
+  "description": "Veille automatisée sur l'actualité rennaise - Élections municipales 2026",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node src/test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@notionhq/client": "^2.2.15",
+    "node-telegram-bot-api": "^0.66.0",
+    "rss-parser": "^3.13.0",
+    "node-cron": "^3.0.3",
+    "express": "^4.21.0",
+    "resend": "^4.0.0",
+    "dotenv": "^16.4.5",
+    "cheerio": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Guillaume Defer",
+  "license": "MIT"
+}
