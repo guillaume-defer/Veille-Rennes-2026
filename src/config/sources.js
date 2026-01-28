@@ -1,72 +1,55 @@
 // Configuration des sources de veille et des entités à suivre
-// Version 3.0 - Intégration réseaux sociaux (Twitter/Nitter, Facebook/Google Alerts, LinkedIn, Bluesky)
+// Version 4.0 - URLs corrigées et instances Nitter fonctionnelles
+// Dernière mise à jour: 28 janvier 2026
+
+// Configuration Nitter - instances avec fallback
+export const NITTER_INSTANCES = [
+  'nitter.poast.org',      // Instance principale fonctionnelle
+  'xcancel.com',           // Alternative 1
+  'nitter.privacyredirect.com', // Alternative 2
+  'nitter.net'             // Instance officielle (backup)
+];
+
+// Instance Nitter par défaut
+export const NITTER_BASE = 'https://nitter.poast.org';
 
 export const RSS_SOURCES = [
   // ============================================
   // PRESSE QUOTIDIENNE RÉGIONALE - PRIORITÉ 1
   // ============================================
+  // URLs corrigées basées sur recherche janvier 2026
   {
-    name: 'Ouest-France Rennes',
-    url: 'https://www.ouest-france.fr/rss/france/bretagne/ille-et-vilaine/rennes',
+    name: 'Ouest-France Une',
+    url: 'https://www.ouest-france.fr/rss/une',
     notionSource: 'Ouest-France',
-    priority: 1
+    priority: 1,
+    filter: 'rennes|rennais|ille-et-vilaine|bretagne'
   },
   {
-    name: 'Ouest-France Bretagne',
-    url: 'https://www.ouest-france.fr/bretagne/rss.xml',
+    name: 'Ouest-France Régions',
+    url: 'https://www.ouest-france.fr/rss-en-continu.xml',
     notionSource: 'Ouest-France',
     priority: 1,
     filter: 'rennes|rennais|ille-et-vilaine'
   },
   {
-    name: 'Le Télégramme Rennes',
-    url: 'https://www.letelegramme.fr/rss/rennes.xml',
-    notionSource: 'Le Télégramme',
-    priority: 1
-  },
-  {
-    name: 'Le Télégramme Ille-et-Vilaine',
-    url: 'https://www.letelegramme.fr/rss/ille-et-vilaine.xml',
+    name: 'Le Télégramme Bretagne',
+    url: 'https://www.letelegramme.fr/rss.xml',
     notionSource: 'Le Télégramme',
     priority: 1,
-    filter: 'rennes|rennais'
+    filter: 'rennes|rennais|ille-et-vilaine'
   },
   {
     name: 'France Bleu Armorique',
-    url: 'https://www.francebleu.fr/rss/armorique/infos.xml',
+    url: 'https://www.francebleu.fr/rss/armorique.xml',
     notionSource: 'France Bleu',
-    priority: 1
-  },
-  {
-    name: '20 Minutes Rennes',
-    url: 'https://www.20minutes.fr/rss/rennes.xml',
-    notionSource: '20 Minutes',
-    priority: 1
+    priority: 1,
+    filter: 'rennes'
   },
 
   // ============================================
   // MÉDIAS LOCAUX ET RÉGIONAUX - PRIORITÉ 2
   // ============================================
-  {
-    name: 'Actu.fr Rennes',
-    url: 'https://actu.fr/bretagne/rennes_35238/feed',
-    notionSource: 'Autre',
-    priority: 2
-  },
-  {
-    name: 'Actu.fr Ille-et-Vilaine',
-    url: 'https://actu.fr/bretagne/ille-et-vilaine/feed',
-    notionSource: 'Autre',
-    priority: 2,
-    filter: 'rennes|rennais'
-  },
-  {
-    name: 'France 3 Bretagne',
-    url: 'https://france3-regions.francetvinfo.fr/bretagne/rss',
-    notionSource: 'Autre',
-    priority: 2,
-    filter: 'rennes|rennais|ille-et-vilaine'
-  },
   {
     name: 'Unidivers Rennes',
     url: 'https://www.unidivers.fr/feed/',
@@ -75,73 +58,37 @@ export const RSS_SOURCES = [
     filter: 'rennes'
   },
   {
-    name: '7seizh Bretagne',
-    url: 'https://7seizh.info/feed/',
+    name: 'France 3 Bretagne',
+    url: 'https://france3-regions.francetvinfo.fr/bretagne/rss.xml',
     notionSource: 'Autre',
     priority: 2,
     filter: 'rennes|rennais|ille-et-vilaine'
   },
-  {
-    name: 'Breizh Info',
-    url: 'https://www.breizh-info.com/feed/',
-    notionSource: 'Autre',
-    priority: 3,
-    filter: 'rennes|rennais'
-  },
-  {
-    name: 'Agence Bretagne Presse',
-    url: 'https://abp.bzh/feed/',
-    notionSource: 'Autre',
-    priority: 2,
-    filter: 'rennes|rennais'
-  },
-
-  // ============================================
-  // SOURCES INSTITUTIONNELLES - PRIORITÉ 2
-  // ============================================
-  {
-    name: 'Rennes Métropole Actus',
-    url: 'https://metropole.rennes.fr/rss.xml',
-    notionSource: 'Rennes Métropole',
-    priority: 2
-  },
-  {
-    name: 'Ville de Rennes',
-    url: 'https://www.rennes.fr/rss.xml',
-    notionSource: 'Rennes Métropole',
-    priority: 2
-  },
 
   // ============================================
   // PRESSE NATIONALE (filtrée) - PRIORITÉ 3
+  // URLs vérifiées janvier 2026
   // ============================================
   {
-    name: 'Le Monde Politique',
-    url: 'https://www.lemonde.fr/politique/rss_full.xml',
+    name: 'Le Monde Une',
+    url: 'https://www.lemonde.fr/rss/une.xml',
     notionSource: 'Le Monde',
     priority: 3,
-    filter: 'rennes|bretagne|ille-et-vilaine|appéré|compagnon'
+    filter: 'rennes|bretagne|ille-et-vilaine|appéré|compagnon|municipales'
   },
   {
-    name: 'Le Monde Régions',
-    url: 'https://www.lemonde.fr/en-regions/rss_full.xml',
-    notionSource: 'Le Monde',
-    priority: 3,
-    filter: 'rennes|bretagne'
-  },
-  {
-    name: 'Le Figaro Politique',
-    url: 'https://www.lefigaro.fr/rss/figaro_politique.xml',
+    name: 'Le Figaro Actualités',
+    url: 'https://www.lefigaro.fr/rss/figaro_actualites.xml',
     notionSource: 'Le Figaro',
     priority: 3,
     filter: 'rennes|bretagne|appéré|compagnon'
   },
   {
-    name: 'Libération France',
-    url: 'https://www.liberation.fr/arc/outboundfeeds/rss-all/collection/accueil-une/',
+    name: 'Libération Politique',
+    url: 'https://www.liberation.fr/arc/outboundfeeds/rss-all/category/politique/?outputType=xml',
     notionSource: 'Libération',
     priority: 3,
-    filter: 'rennes|bretagne'
+    filter: 'rennes|bretagne|municipales'
   },
   {
     name: 'Mediapart',
@@ -151,48 +98,60 @@ export const RSS_SOURCES = [
     filter: 'rennes|bretagne|ille-et-vilaine'
   },
   {
+    name: 'Franceinfo Titres',
+    url: 'https://www.francetvinfo.fr/titres.rss',
+    notionSource: 'Autre',
+    priority: 3,
+    filter: 'rennes|bretagne|municipales'
+  },
+  {
     name: 'Franceinfo Politique',
     url: 'https://www.francetvinfo.fr/politique.rss',
     notionSource: 'Autre',
     priority: 3,
     filter: 'rennes|bretagne|municipales'
   },
+  {
+    name: 'France 24 FR',
+    url: 'https://www.france24.com/fr/rss',
+    notionSource: 'Autre',
+    priority: 3,
+    filter: 'rennes|bretagne|municipales'
+  },
+  {
+    name: 'BFM TV News',
+    url: 'https://www.bfmtv.com/rss/news-24-7/',
+    notionSource: 'Autre',
+    priority: 3,
+    filter: 'rennes|bretagne|municipales'
+  },
+  {
+    name: 'Le Parisien',
+    url: 'https://feeds.leparisien.fr/leparisien/rss',
+    notionSource: 'Autre',
+    priority: 3,
+    filter: 'rennes|bretagne|municipales'
+  },
 
   // ============================================
-  // GOOGLE NEWS (agrégateur) - PRIORITÉ 1-2
+  // SOURCES INSTITUTIONNELLES - PRIORITÉ 2
   // ============================================
   {
-    name: 'Google News Rennes',
-    url: 'https://news.google.com/rss/search?q=rennes+actualit%C3%A9&hl=fr&gl=FR&ceid=FR:fr',
-    notionSource: 'Autre',
-    priority: 2
-  },
-  {
-    name: 'Google News Municipales Rennes',
-    url: 'https://news.google.com/rss/search?q=municipales+rennes+2026&hl=fr&gl=FR&ceid=FR:fr',
-    notionSource: 'Autre',
-    priority: 1
-  },
-  {
-    name: 'Google News Charles Compagnon',
-    url: 'https://news.google.com/rss/search?q=%22charles+compagnon%22+rennes&hl=fr&gl=FR&ceid=FR:fr',
-    notionSource: 'Autre',
-    priority: 1
-  },
-  {
-    name: 'Google News Nathalie Appéré',
-    url: 'https://news.google.com/rss/search?q=%22nathalie+app%C3%A9r%C3%A9%22&hl=fr&gl=FR&ceid=FR:fr',
-    notionSource: 'Autre',
-    priority: 1
+    name: 'DGCL Collectivités Locales',
+    url: 'https://www.collectivites-locales.gouv.fr/rss.xml',
+    notionSource: 'DGCL',
+    priority: 2,
+    filter: 'commune|municipal|maire|élu|collectivité'
   },
 
   // ============================================
   // TWITTER/X VIA NITTER - CANDIDATS
   // ============================================
-  // Note: Nitter.net opérationnel depuis février 2025
+  // Instances fonctionnelles: nitter.poast.org, xcancel.com
+  // Format RSS: https://{instance}/{username}/rss
   {
     name: 'Twitter Charles Compagnon',
-    url: 'https://nitter.net/Ch_Compagnon/rss',
+    url: 'https://nitter.poast.org/Ch_Compagnon/rss',
     notionSource: 'Twitter',
     priority: 1,
     type: 'twitter',
@@ -200,7 +159,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter Vivre Rennes !',
-    url: 'https://nitter.net/Vivre_Rennes/rss',
+    url: 'https://nitter.poast.org/Vivre_Rennes/rss',
     notionSource: 'Twitter',
     priority: 1,
     type: 'twitter',
@@ -208,7 +167,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter Nathalie Appéré',
-    url: 'https://nitter.net/nathalieappere/rss',
+    url: 'https://nitter.poast.org/nathalieappere/rss',
     notionSource: 'Twitter',
     priority: 1,
     type: 'twitter',
@@ -216,7 +175,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter Marie Mesmeur',
-    url: 'https://nitter.net/MarieMesmeur/rss',
+    url: 'https://nitter.poast.org/MarieMesmeur/rss',
     notionSource: 'Twitter',
     priority: 1,
     type: 'twitter',
@@ -224,7 +183,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter LFI Rennes',
-    url: 'https://nitter.net/LFIRENNES/rss',
+    url: 'https://nitter.poast.org/LFIRENNES/rss',
     notionSource: 'Twitter',
     priority: 2,
     type: 'twitter',
@@ -232,7 +191,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter Thomas Rousseau',
-    url: 'https://nitter.net/ThomasR2020/rss',
+    url: 'https://nitter.poast.org/ThomasR2020/rss',
     notionSource: 'Twitter',
     priority: 1,
     type: 'twitter',
@@ -240,7 +199,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter Rennes à Droite',
-    url: 'https://nitter.net/rennesadroite/rss',
+    url: 'https://nitter.poast.org/rennesadroite/rss',
     notionSource: 'Twitter',
     priority: 2,
     type: 'twitter',
@@ -248,7 +207,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter L\'Espoir Rennais',
-    url: 'https://nitter.net/EspoirRennais/rss',
+    url: 'https://nitter.poast.org/EspoirRennais/rss',
     notionSource: 'Twitter',
     priority: 2,
     type: 'twitter',
@@ -256,7 +215,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter Julien Masson',
-    url: 'https://nitter.net/JulienMasson35/rss',
+    url: 'https://nitter.poast.org/JulienMasson35/rss',
     notionSource: 'Twitter',
     priority: 1,
     type: 'twitter',
@@ -264,7 +223,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter RN Bretagne',
-    url: 'https://nitter.net/RNBretagne/rss',
+    url: 'https://nitter.poast.org/RNBretagne/rss',
     notionSource: 'Twitter',
     priority: 2,
     type: 'twitter',
@@ -272,7 +231,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter Carole Gandon',
-    url: 'https://nitter.net/GandonCarole/rss',
+    url: 'https://nitter.poast.org/GandonCarole/rss',
     notionSource: 'Twitter',
     priority: 2,
     type: 'twitter',
@@ -281,7 +240,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter Révéler Rennes',
-    url: 'https://nitter.net/RevelerRennes/rss',
+    url: 'https://nitter.poast.org/RevelerRennes/rss',
     notionSource: 'Twitter',
     priority: 2,
     type: 'twitter',
@@ -289,7 +248,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter Ulysse Rabaté',
-    url: 'https://nitter.net/UlysseRabate/rss',
+    url: 'https://nitter.poast.org/UlysseRabate/rss',
     notionSource: 'Twitter',
     priority: 1,
     type: 'twitter',
@@ -297,7 +256,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter Erell Duclos',
-    url: 'https://nitter.net/Erellux_/rss',
+    url: 'https://nitter.poast.org/Erellux_/rss',
     notionSource: 'Twitter',
     priority: 1,
     type: 'twitter',
@@ -306,10 +265,11 @@ export const RSS_SOURCES = [
 
   // ============================================
   // TWITTER/X VIA NITTER - ACTUALITÉ RENNAISE
+  // Note: Les recherches Nitter peuvent être instables
   // ============================================
   {
     name: 'Twitter Recherche Rennes',
-    url: 'https://nitter.net/search/rss?f=tweets&q=rennes',
+    url: 'https://nitter.poast.org/search/rss?f=tweets&q=rennes',
     notionSource: 'Twitter',
     priority: 2,
     type: 'twitter',
@@ -317,7 +277,7 @@ export const RSS_SOURCES = [
   },
   {
     name: 'Twitter Recherche Municipales Rennes',
-    url: 'https://nitter.net/search/rss?f=tweets&q=municipales+rennes+2026',
+    url: 'https://nitter.poast.org/search/rss?f=tweets&q=municipales+rennes+2026',
     notionSource: 'Twitter',
     priority: 1,
     type: 'twitter'

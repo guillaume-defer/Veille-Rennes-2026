@@ -1,6 +1,6 @@
-// Service de collecte des flux RSS - Version améliorée avec contournement des blocages
+// Service de collecte des flux RSS - Version 4.0 avec fallback Nitter
 import Parser from 'rss-parser';
-import { RSS_SOURCES, RENNES_KEYWORDS } from '../config/sources.js';
+import { RSS_SOURCES, RENNES_KEYWORDS, NITTER_INSTANCES, NITTER_BASE } from '../config/sources.js';
 
 // User-Agents réalistes pour contourner les blocages
 const USER_AGENTS = [
@@ -37,6 +37,49 @@ function createParser() {
       ]
     }
   });
+}
+
+/**
+ * Extrait le chemin RSS d'une URL Nitter pour essayer d'autres instances
+ * Exemple: https://nitter.poast.org/username/rss -> /username/rss
+ */
+function extractNitterPath(url) {
+  const match = url.match(/https?:\/\/[^/]+(\/.+)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Teste une URL RSS et retourne les articles si succès
+ */
+async function tryFetchRSS(url, parser) {
+  const feed = await parser.parseURL(url);
+  return feed;
+}
+
+/**
+ * Collecte depuis une source Nitter avec fallback sur plusieurs instances
+ */
+async function fetchNitterWithFallback(source) {
+  const parser = createParser();
+  const path = extractNitterPath(source.url);
+  
+  if (!path) {
+    console.log(`   ⚠️  ${source.name}: URL Nitter invalide`);
+    return { feed: null, usedInstance: null };
+  }
+  
+  for (const instance of NITTER_INSTANCES) {
+    const testUrl = `https://${instance}${path}`;
+    try {
+      const feed = await tryFetchRSS(testUrl, parser);
+      return { feed, usedInstance: instance };
+    } catch (error) {
+      // Continue vers l'instance suivante
+      continue;
+    }
+  }
+  
+  return { feed: null, usedInstance: null };
 }
 
 /**
@@ -84,7 +127,28 @@ async function fetchSource(source) {
   
   try {
     console.log(`📡 Récupération: ${source.name}`);
-    const feed = await parser.parseURL(source.url);
+    
+    let feed;
+    let usedInstance = null;
+    
+    // Pour les sources Nitter (Twitter), utiliser le fallback multi-instances
+    if (source.type === 'twitter' && source.url.includes('nitter')) {
+      const result = await fetchNitterWithFallback(source);
+      feed = result.feed;
+      usedInstance = result.usedInstance;
+      
+      if (!feed) {
+        console.log(`   ⚠️  ${source.name}: Toutes les instances Nitter ont échoué`);
+        return [];
+      }
+      
+      if (usedInstance && usedInstance !== 'nitter.poast.org') {
+        console.log(`   ℹ️  Fallback utilisé: ${usedInstance}`);
+      }
+    } else {
+      // Pour les autres sources, comportement standard
+      feed = await parser.parseURL(source.url);
+    }
     
     const articles = feed.items
       .filter(item => {
@@ -101,7 +165,8 @@ async function fetchSource(source) {
         content: cleanContent(item.contentSnippet || item.content || item.contentEncoded || '').substring(0, 2000),
         source: source.notionSource,
         sourceName: source.name,
-        sourcePriority: source.priority
+        sourcePriority: source.priority,
+        candidat: source.candidat || null
       }));
     
     console.log(`   ✅ ${articles.length} articles trouvés`);
@@ -116,6 +181,8 @@ async function fetchSource(source) {
       console.log(`   ⚠️  ${source.name}: Flux non trouvé (404)`);
     } else if (errorMsg.includes('timeout') || errorMsg.includes('ETIMEDOUT')) {
       console.log(`   ⚠️  ${source.name}: Timeout`);
+    } else if (errorMsg.includes('Unable to parse XML')) {
+      console.log(`   ⚠️  ${source.name}: Format XML invalide`);
     } else {
       console.log(`   ❌ ${source.name}: ${errorMsg.substring(0, 50)}`);
     }
