@@ -5,7 +5,7 @@ const notion = new Client({
   auth: process.env.NOTION_API_KEY
 });
 
-const DATABASE_ID = process.env.NOTION_DATABASE_ID || '8158a977-4b04-4b3d-8911-8a075e85f314';
+const DATABASE_ID = process.env.NOTION_DATABASE_ID || 'e0f35e1237844ace8745bd362e5dbaa3';
 
 /**
  * Vérifie si un article existe déjà dans la base (par URL)

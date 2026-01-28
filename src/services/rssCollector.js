@@ -1,19 +1,49 @@
-// Service de collecte des flux RSS
+// Service de collecte des flux RSS - Version améliorée avec contournement des blocages
 import Parser from 'rss-parser';
 import { RSS_SOURCES, RENNES_KEYWORDS } from '../config/sources.js';
 
-const parser = new Parser({
-  timeout: 10000,
-  headers: {
-    'User-Agent': 'VeilleRennes2026/1.0 (+https://github.com/veille-rennes)'
-  }
-});
+// User-Agents réalistes pour contourner les blocages
+const USER_AGENTS = [
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0'
+];
+
+// Sélectionne un User-Agent aléatoire
+function getRandomUserAgent() {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
+
+// Créer un parser avec des headers réalistes
+function createParser() {
+  return new Parser({
+    timeout: 15000,
+    headers: {
+      'User-Agent': getRandomUserAgent(),
+      'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+      'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Connection': 'keep-alive',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    },
+    customFields: {
+      item: [
+        ['media:content', 'media'],
+        ['dc:creator', 'creator'],
+        ['content:encoded', 'contentEncoded']
+      ]
+    }
+  });
+}
 
 /**
  * Vérifie si un article contient des mots-clés liés à Rennes
  */
 function isAboutRennes(item, sourceFilter) {
-  const content = `${item.title || ''} ${item.contentSnippet || ''} ${item.content || ''}`.toLowerCase();
+  const content = `${item.title || ''} ${item.contentSnippet || ''} ${item.content || ''} ${item.contentEncoded || ''}`.toLowerCase();
   
   // Si la source a un filtre spécifique, l'utiliser
   if (sourceFilter) {
@@ -26,9 +56,32 @@ function isAboutRennes(item, sourceFilter) {
 }
 
 /**
+ * Nettoie le contenu HTML
+ */
+function cleanContent(html) {
+  if (!html) return '';
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .trim();
+}
+
+/**
  * Collecte les articles d'une source RSS
  */
 async function fetchSource(source) {
+  // Ignorer les sources désactivées
+  if (source.enabled === false) {
+    return [];
+  }
+
+  const parser = createParser();
+  
   try {
     console.log(`📡 Récupération: ${source.name}`);
     const feed = await parser.parseURL(source.url);
@@ -42,11 +95,12 @@ async function fetchSource(source) {
         return true;
       })
       .map(item => ({
-        title: item.title?.trim() || 'Sans titre',
+        title: cleanContent(item.title) || 'Sans titre',
         link: item.link || item.guid,
         pubDate: item.pubDate ? new Date(item.pubDate) : new Date(),
-        content: item.contentSnippet || item.content || '',
+        content: cleanContent(item.contentSnippet || item.content || item.contentEncoded || '').substring(0, 2000),
         source: source.notionSource,
+        sourceName: source.name,
         sourcePriority: source.priority
       }));
     
@@ -54,7 +108,17 @@ async function fetchSource(source) {
     return articles;
     
   } catch (error) {
-    console.error(`   ❌ Erreur ${source.name}:`, error.message);
+    // Afficher l'erreur de manière concise
+    const errorMsg = error.message || 'Erreur inconnue';
+    if (errorMsg.includes('403') || errorMsg.includes('Forbidden')) {
+      console.log(`   ⚠️  ${source.name}: Accès bloqué (403)`);
+    } else if (errorMsg.includes('404')) {
+      console.log(`   ⚠️  ${source.name}: Flux non trouvé (404)`);
+    } else if (errorMsg.includes('timeout') || errorMsg.includes('ETIMEDOUT')) {
+      console.log(`   ⚠️  ${source.name}: Timeout`);
+    } else {
+      console.log(`   ❌ ${source.name}: ${errorMsg.substring(0, 50)}`);
+    }
     return [];
   }
 }
@@ -70,30 +134,44 @@ export async function collectAllArticles(hoursBack = 24) {
   cutoffDate.setHours(cutoffDate.getHours() - hoursBack);
   
   const allArticles = [];
+  const sourceStats = { success: 0, failed: 0, blocked: 0 };
   
   for (const source of RSS_SOURCES) {
     const articles = await fetchSource(source);
     
-    // Filtrer par date
-    const recentArticles = articles.filter(a => a.pubDate >= cutoffDate);
-    allArticles.push(...recentArticles);
+    if (articles.length > 0) {
+      sourceStats.success++;
+      // Filtrer par date
+      const recentArticles = articles.filter(a => a.pubDate >= cutoffDate);
+      allArticles.push(...recentArticles);
+    } else {
+      sourceStats.failed++;
+    }
     
-    // Petit délai pour ne pas surcharger les serveurs
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Délai aléatoire entre 500ms et 1500ms pour paraître plus humain
+    const delay = 500 + Math.random() * 1000;
+    await new Promise(resolve => setTimeout(resolve, delay));
   }
   
   // Dédupliquer par URL
-  const uniqueArticles = allArticles.reduce((acc, article) => {
-    if (!acc.find(a => a.link === article.link)) {
-      acc.push(article);
+  const seenUrls = new Set();
+  const uniqueArticles = allArticles.filter(article => {
+    // Normaliser l'URL pour éviter les doublons avec des paramètres différents
+    const normalizedUrl = article.link?.split('?')[0];
+    if (seenUrls.has(normalizedUrl)) {
+      return false;
     }
-    return acc;
-  }, []);
+    seenUrls.add(normalizedUrl);
+    return true;
+  });
   
   // Trier par date (plus récent en premier)
   uniqueArticles.sort((a, b) => b.pubDate - a.pubDate);
   
-  console.log(`\n📊 Total: ${uniqueArticles.length} articles uniques collectés\n`);
+  console.log(`\n📊 Résultat collecte:`);
+  console.log(`   • Sources OK: ${sourceStats.success}/${RSS_SOURCES.length}`);
+  console.log(`   • Articles uniques: ${uniqueArticles.length}`);
+  console.log('');
   
   return uniqueArticles;
 }
